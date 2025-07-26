@@ -9,12 +9,16 @@ import BackgroundSelector from "@/components/organisms/BackgroundSelector";
 import FilterPanel from "@/components/organisms/FilterPanel";
 import ExportModal from "@/components/organisms/ExportModal";
 import ApperIcon from "@/components/ApperIcon";
-
+import { useImageProcessor } from "@/hooks/useImageProcessor";
 const HeadshotEditor = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [cropData, setCropData] = useState(null);
+  const [showCropOverlay, setShowCropOverlay] = useState(false);
   const canvasRef = useRef(null);
+  const imageRef = useRef(null);
+  const { isProcessing, suggestCrop } = useImageProcessor();
 
   const [adjustments, setAdjustments] = useState({
     brightness: 50,
@@ -70,12 +74,41 @@ const HeadshotEditor = () => {
     setIsDragActive(false);
   }, []);
 
-  const handleReset = () => {
+const handleReset = () => {
     setSelectedImage(null);
     setAdjustments({ brightness: 50, contrast: 50, saturation: 50 });
     setSelectedBackground('#ffffff');
     setSelectedFilter('none');
+    setCropData(null);
+    setShowCropOverlay(false);
     toast.info("Editor reset successfully");
+  };
+
+  const handleAutoCrop = async () => {
+    if (!selectedImage || !imageRef.current) return;
+    
+    try {
+      const img = imageRef.current;
+      const cropSuggestion = await suggestCrop(img, img.naturalWidth, img.naturalHeight);
+      setCropData(cropSuggestion);
+      setShowCropOverlay(true);
+      toast.success("Auto-crop applied based on face detection!");
+    } catch (error) {
+      toast.error("Failed to apply auto-crop");
+    }
+  };
+
+  const handleApplyCrop = () => {
+    if (cropData) {
+      setShowCropOverlay(false);
+      toast.success("Crop applied successfully!");
+    }
+  };
+
+  const handleCancelCrop = () => {
+    setCropData(null);
+    setShowCropOverlay(false);
+    toast.info("Crop cancelled");
   };
 
   const handleOneClickEnhance = () => {
@@ -101,8 +134,17 @@ const HeadshotEditor = () => {
           </p>
         </div>
         
-        {selectedImage && (
-          <div className="flex justify-center space-x-4">
+{selectedImage && (
+          <div className="flex justify-center space-x-3 flex-wrap gap-y-3">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleAutoCrop}
+              disabled={isProcessing}
+            >
+              <ApperIcon name="Crop" className="w-4 h-4 mr-2" />
+              {isProcessing ? "Detecting..." : "Auto Crop"}
+            </Button>
             <Button
               variant="outline"
               size="md"
@@ -111,6 +153,26 @@ const HeadshotEditor = () => {
               <ApperIcon name="Sparkles" className="w-4 h-4 mr-2" />
               Auto Enhance
             </Button>
+            {showCropOverlay && (
+              <>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleApplyCrop}
+                >
+                  <ApperIcon name="Check" className="w-4 h-4 mr-2" />
+                  Apply Crop
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={handleCancelCrop}
+                >
+                  <ApperIcon name="X" className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+              </>
+            )}
             <Button
               variant="secondary"
               size="md"
@@ -150,14 +212,32 @@ const HeadshotEditor = () => {
                 />
               </div>
             ) : (
-              <ImageCanvas
-                ref={canvasRef}
-                image={selectedImage}
-                adjustments={adjustments}
-                background={selectedBackground}
-                filter={selectedFilter}
-                className="relative"
-              />
+<div className="relative">
+                <ImageCanvas
+                  ref={canvasRef}
+                  image={selectedImage}
+                  adjustments={adjustments}
+                  background={selectedBackground}
+                  filter={selectedFilter}
+                  cropData={showCropOverlay ? cropData : null}
+                  onImageLoad={() => {
+                    if (imageRef.current) return;
+                    const img = new Image();
+                    img.onload = () => {
+                      imageRef.current = img;
+                    };
+                    img.src = selectedImage;
+                  }}
+                  className="relative"
+                />
+                <img
+                  ref={imageRef}
+                  src={selectedImage}
+                  alt="Reference"
+                  className="hidden"
+                  crossOrigin="anonymous"
+                />
+              </div>
             )}
           </Card>
 

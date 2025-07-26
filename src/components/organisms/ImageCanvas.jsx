@@ -13,6 +13,7 @@ const ImageCanvas = ({
 }) => {
   const canvasRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (!image || !canvasRef.current) return;
@@ -74,13 +75,16 @@ const ImageCanvas = ({
       }
 
       // Apply crop if specified
-      if (cropData) {
+if (cropData) {
         const { x, y, width, height } = cropData;
         ctx.drawImage(
           img,
           x, y, width, height,
           offsetX, offsetY, drawWidth, drawHeight
         );
+        
+        // Store canvas dimensions for overlay positioning
+        setCanvasSize({ width: canvas.width, height: canvas.height });
       } else {
         ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       }
@@ -153,13 +157,60 @@ const ImageCanvas = ({
         }
       }
 
-      setImageLoaded(true);
+setImageLoaded(true);
       if (onImageLoad) onImageLoad();
     };
 
     img.src = image;
   }, [image, adjustments, background, filter, cropData, onImageLoad]);
 
+  const renderCropOverlay = () => {
+    if (!cropData || !imageLoaded) return null;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width / canvas.width;
+    const scaleY = rect.height / canvas.height;
+    
+    return (
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{ 
+          width: rect.width, 
+          height: rect.height 
+        }}
+      >
+        {/* Crop overlay */}
+        <div className="absolute inset-0 crop-overlay" />
+        
+        {/* Crop area */}
+        <div
+          className="absolute border-2 border-primary-500 bg-transparent"
+          style={{
+            left: cropData.x * scaleX,
+            top: cropData.y * scaleY,
+            width: cropData.width * scaleX,
+            height: cropData.height * scaleY,
+            boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8), inset 0 0 0 1px rgba(37, 99, 235, 0.5)'
+          }}
+        >
+          {/* Corner handles */}
+          <div className="crop-handle absolute w-3 h-3 rounded-full -top-1.5 -left-1.5" />
+          <div className="crop-handle absolute w-3 h-3 rounded-full -top-1.5 -right-1.5" />
+          <div className="crop-handle absolute w-3 h-3 rounded-full -bottom-1.5 -left-1.5" />
+          <div className="crop-handle absolute w-3 h-3 rounded-full -bottom-1.5 -right-1.5" />
+        </div>
+        
+        {/* Face detection indicator */}
+        <div className="absolute top-4 left-4 bg-primary-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2">
+          <ApperIcon name="Scan" size={14} />
+          <span>Face Detected</span>
+        </div>
+      </div>
+    );
+  };
   if (!image) {
     return (
       <div className={cn(

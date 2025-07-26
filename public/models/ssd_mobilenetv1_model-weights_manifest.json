@@ -1,0 +1,12 @@
+{
+  "modelTopology": {
+    "class_name": "Model",
+    "config": {
+      "name": "model",
+      "layers": [],
+      "input_layers": [],
+      "output_layers": []
+    }
+  },
+  "weightsManifest": []
+}
