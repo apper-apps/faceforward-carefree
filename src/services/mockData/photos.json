@@ -1,0 +1,39 @@
+[
+  {
+    "Id": 1,
+    "originalUrl": "/api/placeholder/400/400",
+    "editedUrl": "/api/placeholder/400/400",
+    "adjustments": {
+      "brightness": 50,
+      "contrast": 50,
+      "saturation": 50,
+      "filterType": "none",
+      "filterIntensity": 0
+    },
+    "background": "#ffffff",
+    "filter": "none",
+    "cropData": null,
+    "timestamp": 1703001600000
+  },
+  {
+    "Id": 2,
+    "originalUrl": "/api/placeholder/400/400",
+    "editedUrl": "/api/placeholder/400/400",
+    "adjustments": {
+      "brightness": 55,
+      "contrast": 60,
+      "saturation": 45,
+      "filterType": "professional",
+      "filterIntensity": 80
+    },
+    "background": "linear-gradient(135deg, #3b82f6, #1e40af)",
+    "filter": "professional",
+    "cropData": {
+      "x": 50,
+      "y": 50,
+      "width": 300,
+      "height": 300
+    },
+    "timestamp": 1703088000000
+  }
+]
